@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- redirect begin -->
+  <!-- redirect end -->
+  
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+  <link rel="dns-prefetch" href="https://monkeysayhi.github.io">
+  <title>类加载（初始化）时机 | 程序猿说你好</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;#x9762;&amp;#x8BD5;&amp;#x4E2D;&amp;#x5E38;&amp;#x8003;&amp;#x7684;&amp;#x201C;&amp;#x7C7B;&amp;#x52A0;&amp;#x8F7D;&amp;#x65F6;&amp;#x673A;&amp;#x201D;&amp;#x4E25;&amp;#x683C;&amp;#x6765;&amp;#x8BF4;&amp;#x6307;&amp;#x201C;&amp;#x7C7B;&amp;#x7684;&amp;#x521D;&amp;#x59CB;&amp;#x5316;&amp;#x65F6;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="类加载（初始化）时机">
+<meta property="og:url" content="https://monkeysayhi.github.io/2018/11/03/类加载（初始化）时机/index.html">
+<meta property="og:site_name" content="程序猿说你好">
+<meta property="og:description" content="&amp;#x9762;&amp;#x8BD5;&amp;#x4E2D;&amp;#x5E38;&amp;#x8003;&amp;#x7684;&amp;#x201C;&amp;#x7C7B;&amp;#x52A0;&amp;#x8F7D;&amp;#x65F6;&amp;#x673A;&amp;#x201D;&amp;#x4E25;&amp;#x683C;&amp;#x6765;&amp;#x8BF4;&amp;#x6307;&amp;#x201C;&amp;#x7C7B;&amp;#x7684;&amp;#x521D;&amp;#x59CB;&amp;#x5316;&amp;#x65F6;">
+<meta property="og:image" content="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/类加载（初始化）时机/class-loading.png">
+<meta property="og:updated_time" content="2018-11-03T07:09:10.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="类加载（初始化）时机">
+<meta name="twitter:description" content="&amp;#x9762;&amp;#x8BD5;&amp;#x4E2D;&amp;#x5E38;&amp;#x8003;&amp;#x7684;&amp;#x201C;&amp;#x7C7B;&amp;#x52A0;&amp;#x8F7D;&amp;#x65F6;&amp;#x673A;&amp;#x201D;&amp;#x4E25;&amp;#x683C;&amp;#x6765;&amp;#x8BF4;&amp;#x6307;&amp;#x201C;&amp;#x7C7B;&amp;#x7684;&amp;#x521D;&amp;#x59CB;&amp;#x5316;&amp;#x65F6;">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/类加载（初始化）时机/class-loading.png">
+  
+    <link rel="alternative" href="/atom.xml" title="程序猿说你好" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link rel="stylesheet" href="/main.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89666809-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+      <div class="overlay"></div>
+<div class="intrude-less">
+	<header id="header" class="inner">
+		<a href="/" class="profilepic">
+			
+			<img src="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/_common/avatar.jpg" class="js-avatar">
+			
+		</a>
+
+		<hgroup>
+		  <h1 class="header-author"><a href="/">猴子007</a></h1>
+		</hgroup>
+
+		
+		<p class="header-subtitle">来了就是猿</p>
+		
+
+		<nav class="header-menu">
+			<ul>
+			
+				<li><a href="/">主页</a></li>
+	        
+				<li><a href="/archives/">时间线</a></li>
+	        
+			</ul>
+		</nav>
+		<nav class="header-smart-menu">
+	        
+    		
+    			
+    			<a class="js-smart-menu" data-idx="0" href="javascript:void(0)">所有文章</a>
+    			
+    			
+            
+    			
+    			<a class="js-smart-menu" data-idx="1" href="javascript:void(0)">标签</a>
+    			
+    			
+            
+    			
+    			<a class="js-smart-menu" data-idx="2" href="javascript:void(0)">友链</a>
+    			
+    			
+            
+    			
+    			<a class="js-smart-menu" data-idx="3" href="javascript:void(0)">关于我</a>
+    			
+    			
+            
+		</nav>
+		<nav class="header-nav">
+			<div class="social">
+				
+					<a class="github" target="_blank" href="https://github.com/monkeysayhi" title="github"><i class="icon-github"></i></a>
+		        
+					<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
+		        
+					<a class="mail" target="_blank" href="mailto:monkeysayhi@163.com" title="mail"><i class="icon-mail"></i></a>
+		        
+			</div>
+		</nav>
+	</header>		
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+  	<div class="overlay">
+  		<div class="slider-trigger"><i class="icon-sort"></i></div>
+  		<h1 class="header-author js-mobile-header hide">猴子007</h1>
+  	</div>
+	<div class="intrude-less">
+		<header id="header" class="inner">
+			<div class="profilepic">
+				
+					<img src="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/_common/avatar.jpg" class="js-avatar">
+				
+			</div>
+			<hgroup>
+			  <h1 class="header-author">猴子007</h1>
+			</hgroup>
+			
+			<p class="header-subtitle">来了就是猿</p>
+			
+			<nav class="header-menu">
+				<ul>
+				
+					<li><a href="/">主页</a></li>
+		        
+					<li><a href="/archives/">时间线</a></li>
+		        
+				</ul>
+			</nav>
+			<nav class="header-nav">
+				<div class="social">
+					
+						<a class="github" target="_blank" href="https://github.com/monkeysayhi" title="github"><i class="icon-github"></i></a>
+			        
+						<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
+			        
+						<a class="mail" target="_blank" href="mailto:monkeysayhi@163.com" title="mail"><i class="icon-mail"></i></a>
+			        
+				</div>
+			</nav>
+		</header>				
+	</div>
+</nav>
+
+      <div class="body-wrap">
+        <article id="post-类加载（初始化）时机" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      类加载（初始化）时机
+    </h1>
+  
+
+        <a href="/2018/11/03/类加载（初始化）时机/" class="archive-article-date">
+  	<time datetime="2018-11-03T07:07:05.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-11-03</time>
+</a>
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&#x9762;&#x8BD5;&#x4E2D;&#x5E38;&#x8003;&#x7684;&#x201C;&#x7C7B;&#x52A0;&#x8F7D;&#x65F6;&#x673A;&#x201D;&#x4E25;&#x683C;&#x6765;&#x8BF4;&#x6307;&#x201C;&#x7C7B;&#x7684;&#x521D;&#x59CB;&#x5316;&#x65F6;&#x673A;&#x201D;&#x3002;</p>
+<a id="more"></a>
+<h1 id="&#x89E3;&#x91CA;&#x7C7B;&#x52A0;&#x8F7D;&#x4E0E;&#x521D;&#x59CB;&#x5316;"><a href="#&#x89E3;&#x91CA;&#x7C7B;&#x52A0;&#x8F7D;&#x4E0E;&#x521D;&#x59CB;&#x5316;" class="headerlink" title="&#x89E3;&#x91CA;&#x7C7B;&#x52A0;&#x8F7D;&#x4E0E;&#x521D;&#x59CB;&#x5316;"></a>&#x89E3;&#x91CA;&#x7C7B;&#x52A0;&#x8F7D;&#x4E0E;&#x521D;&#x59CB;&#x5316;</h1><p>&#x9996;&#x5148;&#xFF0C;&#x533A;&#x5206;&#x7C7B;&#x52A0;&#x8F7D;classloading&#x4E0E;&#x7C7B;&#x751F;&#x547D;&#x5468;&#x671F;&#x4E2D;&#x7684;&#x52A0;&#x8F7D;loading&#x9636;&#x6BB5;&#xFF1A;</p>
+<p>&#x7C7B;&#x52A0;&#x8F7D;classloading&#x901A;&#x5E38;&#x4E0D;&#x5355;&#x5355;&#x6307;&#x7C7B;&#x7684;&#x52A0;&#x8F7D;loading&#x9636;&#x6BB5;&#xFF0C;&#x800C;&#x6307;&#x7C7B;&#x4ECE;&#x52A0;&#x8F7D;loading&#x5230;&#x521D;&#x59CB;&#x5316;initialization&#x9636;&#x6BB5;&#x7684;&#x8FD9;&#x4E00;&#x6BB5;&#x65F6;&#x95F4;&#x5185;&#x7684;&#x884C;&#x4E3A;&#x3002;</p>
+<p>&#x90A3;&#x4E48;&#xFF0C;&#x4EC0;&#x4E48;&#x60C5;&#x51B5;&#x4E0B;&#x9700;&#x8981;&#x5F00;&#x59CB;&#x52A0;&#x8F7D;loading&#x5462;&#xFF1F;JVM&#x89C4;&#x8303;&#x4E2D;&#x5E76;&#x6CA1;&#x6709;&#x5F3A;&#x5236;&#x7EA6;&#x675F;&#xFF0C;&#x53D6;&#x51B3;&#x4E8E;&#x865A;&#x62DF;&#x673A;&#x7684;&#x5177;&#x4F53;&#x5B9E;&#x73B0;&#x3002;&#x4F46;&#x662F;&#x5BF9;&#x4E8E;&#x521D;&#x59CB;&#x5316;initialization&#x9636;&#x6BB5;&#xFF0C;JVM&#x89C4;&#x8303;&#x5219;&#x4E25;&#x683C;&#x89C4;&#x5B9A;&#x4E86;&#x6709;&#x4E14;&#x53EA;&#x6709;5&#x79CD;&#x60C5;&#x51B5;&#x5FC5;&#x987B;&#x7ACB;&#x5373;&#x5BF9;&#x7C7B;&#x8FDB;&#x884C;&#x201C;&#x521D;&#x59CB;&#x5316;&#x201D;&#xFF08;&#x56E0;&#x6B64;&#xFF0C;&#x52A0;&#x8F7D;&#x3001;&#x9A8C;&#x8BC1;&#x3001;&#x51C6;&#x5907;&#x3001;&#x89E3;&#x6790;&#x81EA;&#x7136;&#x9700;&#x8981;&#x5728;&#x6B64;&#x4E4B;&#x524D;&#x5F00;&#x59CB;&#xFF09;&#x3002;</p>
+<p>&#x56E0;&#x6B64;&#xFF0C;&#x9762;&#x8BD5;&#x4E2D;&#x5E38;&#x8003;&#x7684;&#x201C;&#x7C7B;&#x52A0;&#x8F7D;&#x65F6;&#x673A;&#x201D;&#x4E25;&#x683C;&#x6765;&#x8BF4;&#x6307;&#x201C;&#x7C7B;&#x7684;&#x521D;&#x59CB;&#x5316;&#x65F6;&#x673A;&#x201D;&#x3002;&#x7528;&#x4E8E;&#x6F14;&#x793A;&#x7C7B;&#x52A0;&#x8F7D;&#x987A;&#x5E8F;&#x7684;&#x9759;&#x6001;&#x8BED;&#x53E5;&#x5757;&#x3001;&#x9759;&#x6001;&#x53D8;&#x91CF;&#x8D4B;&#x503C;&#x7B49;&#x64CD;&#x4F5C;&#x4E5F;&#x662F;&#x5728;&#x521D;&#x59CB;&#x5316;&#x65F6;&#x673A;&#x5B8C;&#x6210;&#x7684;&#x3002;</p>
+<p>&#x7C7B;&#x7684;&#x5B8C;&#x6574;&#x751F;&#x547D;&#x5468;&#x671F;&#x5982;&#x4E0B;&#xFF1A;</p>
+<p><img src="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/&#x7C7B;&#x52A0;&#x8F7D;&#xFF08;&#x521D;&#x59CB;&#x5316;&#xFF09;&#x65F6;&#x673A;/class-loading.png" alt="class-loading"></p>
+<h1 id="&#x4EC0;&#x4E48;&#x65F6;&#x5019;&#x521D;&#x59CB;&#x5316;"><a href="#&#x4EC0;&#x4E48;&#x65F6;&#x5019;&#x521D;&#x59CB;&#x5316;" class="headerlink" title="&#x4EC0;&#x4E48;&#x65F6;&#x5019;&#x521D;&#x59CB;&#x5316;"></a>&#x4EC0;&#x4E48;&#x65F6;&#x5019;&#x521D;&#x59CB;&#x5316;</h1><p>4&#x79CD;&#x5E38;&#x89C1;&#x573A;&#x666F;&#xFF1A;</p>
+<ol>
+<li>&#x5F53;&#x865A;&#x62DF;&#x673A;&#x542F;&#x52A8;&#x65F6;&#xFF0C;&#x7528;&#x6237;&#x9700;&#x8981;&#x6307;&#x5B9A;&#x4E00;&#x4E2A;&#x8981;&#x6267;&#x884C;&#x7684;&#x4E3B;&#x7C7B;<code>MainClass</code>&#xFF08;&#x5373;&#x5305;&#x542B;psvm&#x65B9;&#x6CD5;&#x7684;&#x90A3;&#x4E2A;&#x7C7B;&#xFF09;&#xFF0C;&#x865A;&#x62DF;&#x673A;&#x4F1A;&#x5148;&#x521D;&#x59CB;&#x5316;&#x8FD9;&#x4E2A;&#x4E3B;&#x7C7B;&#x3002;</li>
+<li>&#x9047;&#x5230;<code>new</code>&#x3001;<code>getstatic</code>&#x3001;<code>putstatic</code>&#x6216;<code>invokestatic</code>&#x8FD9;4&#x6761;&#x5B57;&#x8282;&#x7801;&#x6307;&#x4EE4;&#x65F6;&#x3002;&#x751F;&#x6210;&#x8FD9;4&#x6761;&#x6307;&#x4EE4;&#x7684;&#x5178;&#x578B;Java&#x4EE3;&#x7801;&#x573A;&#x666F;&#x662F;&#xFF1A;<ol>
+<li>&#x4F7F;&#x7528;<code>new</code>&#x5173;&#x952E;&#x5B57;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#x3002;</li>
+<li>&#x8BFB;&#x53D6;&#x6216;&#x8BBE;&#x7F6E;&#x4E00;&#x4E2A;&#x7C7B;&#x7684;&#x9759;&#x6001;&#x5B57;&#x6BB5;&#x2014;&#x2014;&#x88AB;<code>final</code>&#x4FEE;&#x9970;&#x3001;&#x5DF2;&#x5728;&#x7F16;&#x8BD1;&#x671F;&#x628A;&#x7ED3;&#x679C;&#x653E;&#x5165;&#x5E38;&#x91CF;&#x6C60;&#x7684;&#x9759;&#x6001;&#x5B57;&#x6BB5;&#x9664;&#x5916;&#x3002;</li>
+<li>&#x8C03;&#x7528;&#x4E00;&#x4E2A;&#x7C7B;&#x7684;&#x9759;&#x6001;&#x65B9;&#x6CD5;&#x3002;</li>
+</ol>
+</li>
+<li>&#x5F53;&#x521D;&#x59CB;&#x5316;&#x4E00;&#x4E2A;&#x7C7B;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x5982;&#x679C;&#x53D1;&#x73B0;&#x5176;&#x7236;&#x7C7B;&#x8FD8;&#x6CA1;&#x6709;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x5219;&#x9700;&#x8981;&#x5148;&#x89E6;&#x53D1;&#x5176;&#x7236;&#x7C7B;&#x7684;&#x521D;&#x59CB;&#x5316;&#x3002;</li>
+<li>&#x4F7F;&#x7528;<code>java.lang.reflect</code>&#x5305;&#x7684;&#x65B9;&#x6CD5;&#x5BF9;&#x7C7B;&#x8FDB;&#x884C;&#x53CD;&#x5C04;&#x8C03;&#x7528;&#x65F6;&#x3002;</li>
+</ol>
+<blockquote>
+<p>&#x9664;&#x6B64;&#x4E4B;&#x5916;&#xFF0C;&#x6BD4;&#x8F83;&#x5E38;&#x7528;&#x7684;&#x53E6;&#x4E00;&#x4E2A;&#x573A;&#x666F;&#x662F;&#x8C03;&#x7528;<code>Class.forName()</code>&#x65B9;&#x6CD5;&#x65F6;&#xFF0C;&#x53EF;&#x6307;&#x5B9A;<code>initialize</code>&#x53C2;&#x6570;&#x4E3A;true&#xFF0C;&#x6700;&#x540E;&#x901A;&#x8FC7;JNI&#x52A0;&#x8F7D;&#x7C7B;&#x5E76;&#x521D;&#x59CB;&#x5316;&#x3002;</p>
+</blockquote>
+<p>1&#x79CD;&#x4E0D;&#x5E38;&#x89C1;&#x573A;&#x666F;&#xFF1A;</p>
+<ol>
+<li>&#x5F53;&#x4F7F;&#x7528;JDK 1.7&#x7684;&#x52A8;&#x6001;&#x8BED;&#x8A00;&#x652F;&#x6301;&#x65F6;&#xFF0C;&#x5982;&#x679C;&#x4E00;&#x4E2A;<code>java.lang.invoke.MethodHandle</code>&#x5B9E;&#x4F8B;&#x6700;&#x540E;&#x7684;&#x89E3;&#x6790;&#x7ED3;&#x679C;<code>REF_getStatic</code>&#x3001;<code>REF_putStatic</code>&#x3001;<code>REF_invokeStatic</code>&#x7684;&#x65B9;&#x6CD5;&#x53E5;&#x67C4;&#xFF0C;&#x5E76;&#x4E14;&#x8FD9;&#x4E2A;&#x65B9;&#x6CD5;&#x53E5;&#x67C4;&#x6240;&#x5BF9;&#x5E94;&#x7684;&#x7C7B;&#x6CA1;&#x6709;&#x8FDB;&#x884C;&#x8FC7;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x5219;&#x9700;&#x8981;&#x5148;&#x89E6;&#x53D1;&#x5176;&#x521D;&#x59CB;&#x5316;&#x3002;</li>
+</ol>
+<blockquote>
+<p>&#x5BF9;&#x4E8E;&#x8FD9;5&#x79CD;&#x573A;&#x666F;&#xFF0C;&#x865A;&#x62DF;&#x673A;&#x89C4;&#x8303;&#x4E2D;&#x4F7F;&#x7528;&#x4E86;&#x4E00;&#x4E2A;&#x5F88;&#x5F3A;&#x70C8;&#x7684;&#x9650;&#x5B9A;&#x8BED;&#xFF1A;&#x201C;<strong>&#x6709;&#x4E14;&#x53EA;&#x6709;</strong>&#x201D;&#x3002;</p>
+</blockquote>
+<p>&#x8FD9;5&#x79CD;&#x573A;&#x666F;&#x4E2D;&#x7684;&#x884C;&#x4E3A;&#x79F0;&#x4E3A;&#x5BF9;&#x4E00;&#x4E2A;&#x7C7B;&#x8FDB;&#x884C;<code>&#x4E3B;&#x52A8;&#x5F15;&#x7528;</code>&#x3002;&#x9664;&#x6B64;&#x4E4B;&#x5916;&#xFF0C;&#x6240;&#x6709;&#x5F15;&#x7528;&#x7C7B;&#x7684;&#x65B9;&#x5F0F;&#x90FD;&#x4E0D;&#x4F1A;&#x89E6;&#x53D1;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x79F0;&#x4E3A;<code>&#x88AB;&#x52A8;&#x5F15;&#x7528;</code>&#x3002;</p>
+<blockquote>
+<p>&#x6211;&#x4EEC;&#x4E0D;&#x9700;&#x8981;&#x53BB;&#x5173;&#x6CE8;&#x88AB;&#x52A8;&#x5F15;&#x7528;&#x3002;&#x88AB;&#x52A8;&#x5F15;&#x7528;&#x4EC5;&#x4EC5;&#x6307;&#x90A3;&#x4E9B;&#x770B;&#x4E0A;&#x53BB;&#x5411;&#x4E3B;&#x52A8;&#x5F15;&#x7528;&#xFF0C;&#x5B9E;&#x9645;&#x4E0A;&#x5374;&#x4E0D;&#x662F;&#x7684;&#x60C5;&#x51B5;&#xFF0C;&#x5982;&#xFF1A;</p>
+<ul>
+<li>&#x901A;&#x8FC7;&#x5B50;&#x7C7B;&#x5F15;&#x7528;&#x7236;&#x7C7B;&#x7684;&#x9759;&#x6001;&#x5B57;&#x6BB5;&#xFF0C;&#x4E0D;&#x4F1A;&#x5BFC;&#x81F4;&#x5B50;&#x7C7B;&#x521D;&#x59CB;&#x5316;&#xFF08;<font color="red">&#x5982;&#x4F55;&#x5B9E;&#x73B0;&#xFF1F;</font>&#xFF09;</li>
+<li>&#x901A;&#x8FC7;&#x6570;&#x7EC4;&#x5B9A;&#x4E49;&#x7C7B;&#x5F15;&#x7528;&#x7C7B;&#xFF0C;&#x4E0D;&#x4F1A;&#x89E6;&#x53D1;&#x6B64;&#x7C7B;&#x7684;&#x521D;&#x59CB;&#x5316;&#xFF08;JVM&#x4E3A;&#x6BCF;&#x4E2A;&#x6570;&#x7EC4;&#x751F;&#x6210;&#x4E13;&#x6709;&#x7684;&#x7C7B;&#x578B;&#xFF0C;&#x6BD4;&#x5982;&#x6570;&#x7EC4;<code>A[]</code>&#x7684;&#x7C7B;&#x578B;&#x662F;<code>[A</code>&#xFF09;</li>
+<li>&#x5F15;&#x7528;&#x5E38;&#x91CF;&#xFF0C;&#x4E0D;&#x4F1A;&#x89E6;&#x53D1;&#x6B64;&#x7C7B;&#x7684;&#x521D;&#x59CB;&#x5316;&#xFF08;&#x5E38;&#x91CF;&#x5728;&#x7F16;&#x8BD1;&#x9636;&#x6BB5;&#x4F1A;&#x5B58;&#x5165;&#x8C03;&#x7528;&#x7C7B;&#x7684;&#x5E38;&#x91CF;&#x6C60;&#x4E2D;&#xFF08;<code>&#x5E38;&#x91CF;&#x4F20;&#x64AD;</code>&#xFF09;&#xFF0C;&#x8FD0;&#x884C;&#x671F;&#x4E5F;&#x5C31;&#x6CA1;&#x6709;&#x76F4;&#x63A5;&#x5F15;&#x7528;&#x5230;&#x5B9A;&#x4E49;&#x5E38;&#x91CF;&#x7684;&#x7C7B;&#xFF09;</li>
+</ul>
+</blockquote>
+<hr>
+<blockquote>
+<p>&#x53C2;&#x8003;:</p>
+<ul>
+<li><a href="https://blog.csdn.net/anialy/article/details/8175213" target="_blank" rel="external">Java &#x4E2D;&#x5BF9;&#x7C7B;&#x7684;&#x4E3B;&#x52A8;&#x5F15;&#x7528;&#x548C;&#x88AB;&#x52A8;&#x5F15;&#x7528;</a></li>
+</ul>
+</blockquote>
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>make a better world for everyone<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                    <div class="reward-box-item">
+                      <img class="reward-img" src="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/_common/weixin_pay_qr_code.png">
+                      <span class="reward-type">微信</span>
+                    </div>
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags"></i>
+		<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JVM/">JVM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/原创/">原创</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/面试/">面试</a></li></ul>
+	</div>
+
+      
+
+      
+
+      
+        <div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode"></div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+      
+      <!--文章底部-->
+      <div style="font-size:12px;border-bottom: #ddd 1px solid; BORDER-LEFT: #ddd 1px solid; BACKGROUND: #f6f6f6; MIN-HEIGHT: 120px; BORDER-TOP: #ddd 1px solid; BORDER-RIGHT: #ddd 1px solid">
+	<div style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 5px; FLOAT: left; MARGIN-LEFT: 5px; MARGIN-RIGHT: 10px">
+		<div style="text-align:center">
+			扫描微信关注我<br>
+			<img alt="微信公众号二维码" title="微信公众号二维码" src="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/_common/weixin_qr_code.jpg" height="90" />
+		</div>
+	</div>
+	<div style="LINE-HEIGHT: 200%; MARGIN-TOP: 10px; COLOR: #000000">
+		本文链接：<a href="/2018/11/03/类加载（初始化）时机/">类加载（初始化）时机</a><br/>
+		作者：<a title="点击联系我" href="mailto:monkeysayhi@163.com">猴子007</a><br/>
+		出处：<a href="/">https://monkeysayhi.github.io</a><br/>
+		本文基于<a target="_blank" title="Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)" href="http://creativecommons.org/licenses/by-sa/4.0/"> 知识共享署名-相同方式共享 4.0 </a>国际许可协议发布，欢迎转载，演绎或用于商业目的，但是必须保留本文的署名及链接。
+	</div>
+</div>
+      
+</article>
+
+  
+<nav id="article-nav">
+  
+    <a href="/2018/11/05/Java中的常见OOM及原因/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          Java中的常见OOM及原因
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/11/02/浅谈CMS原理/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">浅谈CMS原理</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+
+
+
+
+
+
+
+      </div>
+      <footer id="footer">
+  <div class="outer">
+    <div id="footer-info">
+    	<div class="footer-left">
+    		&copy; 2019 猴子007
+    	</div>
+      	<div class="footer-right">
+      		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
+      	</div>
+    </div>
+  </div>
+</footer>
+    </div>
+    <script>
+	var yiliaConfig = {
+		mathjax: false,
+		animate: true,
+		isHome: false,
+		isPost: true,
+		isArchive: false,
+		isTag: false,
+		isCategory: false,
+		open_in_new: false,
+		root: "/",
+		innerArchive: true
+	}
+</script>
+
+<script src="/./main.js"></script>
+
+
+
+
+
+
+    
+<div class="tools-col">
+  <ul class="btn-wrap">
+    
+      <li class="chose" data-hook="tools-section-all"><span class="text">全部</span><i class="icon-book"></i></li>
+    
+    
+      <li data-hook="tools-section-tag"><span class="text">标签</span><i class="icon-price-tags"></i></li>
+    
+    
+      <li data-hook="tools-section-friends"><span class="text">友链</span><i class="icon-link"></i></li>
+    
+    
+      <li data-hook="tools-section-me"><span class="text">我</span><i class="icon-smile"></i></li>
+    
+  </ul>
+  <div class="tools-wrap">
+    
+    	<section class="tools-section tools-section-all chose">
+    	</section>
+    
+
+    
+    	<section class="tools-section tools-section-tag">
+    			<div class="widget tagcloud" id="js-tagcloud">
+    				<a href="/tags/HDFS/" style="font-size: 16.15px;">HDFS</a> <a href="/tags/Hadoop/" style="font-size: 16.92px;">Hadoop</a> <a href="/tags/IDEA/" style="font-size: 10px;">IDEA</a> <a href="/tags/JVM/" style="font-size: 15.38px;">JVM</a> <a href="/tags/Java/" style="font-size: 18.46px;">Java</a> <a href="/tags/LintCode/" style="font-size: 13.08px;">LintCode</a> <a href="/tags/Linux/" style="font-size: 12.31px;">Linux</a> <a href="/tags/Mac/" style="font-size: 10px;">Mac</a> <a href="/tags/Python/" style="font-size: 10px;">Python</a> <a href="/tags/TCP/" style="font-size: 10.77px;">TCP</a> <a href="/tags/Yarn/" style="font-size: 11.54px;">Yarn</a> <a href="/tags/test/" style="font-size: 10px;">test</a> <a href="/tags/事务/" style="font-size: 10px;">事务</a> <a href="/tags/分布式/" style="font-size: 12.31px;">分布式</a> <a href="/tags/原创/" style="font-size: 20px;">原创</a> <a href="/tags/并发/" style="font-size: 17.69px;">并发</a> <a href="/tags/数据库/" style="font-size: 10.77px;">数据库</a> <a href="/tags/猿工/" style="font-size: 13.85px;">猿工</a> <a href="/tags/猿格/" style="font-size: 13.85px;">猿格</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a> <a href="/tags/硬件/" style="font-size: 10px;">硬件</a> <a href="/tags/科普/" style="font-size: 12.31px;">科普</a> <a href="/tags/算法/" style="font-size: 13.85px;">算法</a> <a href="/tags/系统设计/" style="font-size: 10px;">系统设计</a> <a href="/tags/索引/" style="font-size: 10px;">索引</a> <a href="/tags/网络/" style="font-size: 10.77px;">网络</a> <a href="/tags/设计模式/" style="font-size: 14.62px;">设计模式</a> <a href="/tags/轮子/" style="font-size: 10px;">轮子</a> <a href="/tags/鉴赏/" style="font-size: 10px;">鉴赏</a> <a href="/tags/随笔/" style="font-size: 10.77px;">随笔</a> <a href="/tags/面试/" style="font-size: 19.23px;">面试</a>
+    			</div>
+    	</section>
+    
+
+    
+    	<section class="tools-section tools-section-friends">
+  		
+  			<div class="friends-wrap" id="js-friends">
+  			
+  	          <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.jianshu.com/u/e94a22a2b6f1/">简书</a>
+  	        
+  	          <a target="_blank" class="main-nav-link switch-friends-link" href="https://juejin.im/user/59cf5ebef265da0672286a9a/">掘金</a>
+  	        
+  	          <a target="_blank" class="main-nav-link switch-friends-link" href="http://spy19930412.github.io/">Jane_s_blog</a>
+  	        
+  	          <a target="_blank" class="main-nav-link switch-friends-link" href="http://zongwenlong.github.io/">All_is_well</a>
+  	        
+  	        </div>
+  		
+    	</section>
+    
+
+    
+    	<section class="tools-section tools-section-me">
+  	  	
+  	  		<div class="aboutme-wrap" id="js-aboutme">我是猴子007，&lt;br&gt;一只非常特殊的动物，&lt;br&gt;可以从事程序的开发、维护，&lt;br&gt;经常因寻找香蕉或母猿而无心工作。</div>
+  	  	
+    	</section>
+    
+  </div>
+  
+</div>
+    <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+  </div>
+</body>
+</html>
